@@ -21,7 +21,7 @@ module.exports = {
             await interaction.editReply(reply);
         } catch (error) {
             // Handle any errors that occur during the API call
-            await interaction.editReply('Failed to stop the server or un-allocate the IP address. Please notify Alex and try again later.');
+            await interaction.editReply('Failed to stop the server. Please notify Alex.');
         }
     },
 };
