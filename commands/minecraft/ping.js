@@ -17,7 +17,7 @@ module.exports = {
 			// Construct the reply based on the server status
 			const reply = response.status === 'up' 
 				? `The server is up!\nYou can find it at ${response.public_ip}!` 
-				: 'The server is down! Use /updog to bring the server up! (Still in development)';
+				: 'The server is down! Use /updog to bring the server up!';
 
 			// Send the reply
 			await interaction.editReply(reply);
