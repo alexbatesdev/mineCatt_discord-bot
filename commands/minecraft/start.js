@@ -15,7 +15,7 @@ module.exports = {
             console.log(response);
             
             // Construct the reply with the server IP address
-            const reply = `The Minecraft server is up!\nYou can find it at ${response.public_ip}!`;
+            const reply = `The Minecraft server is up! (It can take ~20 seconds after this message before it becomes joinable)\nYou can find it at ${response.public_ip}!`;
             
             // Edit the initial reply to include the IP address
             await interaction.editReply(reply);
