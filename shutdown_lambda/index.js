@@ -71,23 +71,6 @@ module.exports.handler = async (event) => {
     try {
         // Stop the EC2 instance
         await ec2.stopInstances({ InstanceIds: [INSTANCE_ID] }).promise();
-
-        // Wait for the instance to stop
-        await ec2.waitFor('instanceStopped', { InstanceIds: [INSTANCE_ID] }).promise();
-        console.log(`Stopped instance: ${INSTANCE_ID}`);
-    } catch (error) {
-        console.error(`Error: ${error.message}`);
-        errors.push(error.message);
-    }
-
-    try {
-        // Get the Elastic IP allocation ID dynamically
-        const allocationId = await getElasticIpAllocationId(INSTANCE_ID);
-        console.log(`Elastic IP allocation ID: ${allocationId}`);
-
-        // Release the Elastic IP
-        await ec2.releaseAddress({ AllocationId: allocationId }).promise();
-        console.log(`Released Elastic IP: ${allocationId}`);
     } catch (error) {
         console.error(`Error: ${error.message}`);
         errors.push(error.message);
@@ -102,7 +85,7 @@ module.exports.handler = async (event) => {
     }
     const response = {
         statusCode: 200,
-        body: JSON.stringify({ "message": "Instance stopped and Elastic IP released" }),
+        body: JSON.stringify({ "message": "Minecraft Server closed, EC2 instance stopping..." }),
     };
     return response;
 };

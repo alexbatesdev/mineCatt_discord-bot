@@ -38,7 +38,7 @@ async function mountVolume() {
 }
 
 async function startDockerContainer() {
-    const command = `sudo docker-compose -f /home/ec2-user/minecraft/docker-compose.yml up -d`;
+    const command = `sudo docker-compose -f /home/ec2-user/minecraft/docker-compose.yaml up -d`;
     const params = {
         DocumentName: 'AWS-RunShellScript',
         InstanceIds: [INSTANCE_ID],
@@ -105,59 +105,15 @@ exports.handler = async (event) => {
         };
         return response;
     }
-
+    // This is here because javscript doesn't have poggers scope like python
+    let publicIp = null;
     try {
-        // Wait until the instance is in the "running" state
-        await ec2.waitFor('instanceStatusOk', { InstanceIds: [INSTANCE_ID] }).promise();
-        console.log(`Instance ${INSTANCE_ID} is in 'running' state`);
-
-        // Mount the volume
-        await mountVolume();
-        console.log(`Mounted volume on instance ${INSTANCE_ID}`);
-    } catch (error) {
-        // Stop the EC2 instance
-        fetch("https://dts45otpkwa5mer2ahsbvgnnj40rgvwc.lambda-url.us-west-2.on.aws/")
-        console.error(`Error mounting volume: ${error.message}`);
-        const response = {
-            statusCode: 500,
-            body: JSON.stringify(error.message),
-        };
-        return response;
-    }
-
-    try {
-        // Start the Docker container
-        await startDockerContainer();
-        console.log(`Started Docker container on instance ${INSTANCE_ID}`);
-    } catch (error) {
-        // Stop the EC2 instance
-        fetch("https://dts45otpkwa5mer2ahsbvgnnj40rgvwc.lambda-url.us-west-2.on.aws/")
-        console.error(`Error starting Docker container: ${error.message}`);
-        const response = {
-            statusCode: 500,
-            body: JSON.stringify(error.message),
-        };
-        return response;
-    }
-
-    try {
-        // Create an Elastic IP
-        const allocation = await ec2.allocateAddress({ Domain: 'vpc' }).promise();
-        const allocationId = allocation.AllocationId;
-        const publicIp = allocation.PublicIp;
-        console.log(`Created Elastic IP: ${publicIp} with Allocation ID: ${allocationId}`);
-
-        // Get the network interface ID
+        // Get the public IP address of the instance
         const describeInstancesResponse = await ec2.describeInstances({ InstanceIds: [INSTANCE_ID] }).promise();
-        const networkInterfaceId = describeInstancesResponse.Reservations[0].Instances[0].NetworkInterfaces[0].NetworkInterfaceId;
-
-        // Associate the Elastic IP with the instance
-        await ec2.associateAddress({ AllocationId: allocationId, NetworkInterfaceId: networkInterfaceId }).promise();
-        console.log(`Associated Elastic IP ${publicIp} with instance ${INSTANCE_ID}`);
+        publicIp = describeInstancesResponse.Reservations[0].Instances[0].PublicIpAddress;
+        console.log(`Public IP address: ${publicIp}`);
     } catch (error) {
-        // Stop the EC2 instance
-        fetch("https://dts45otpkwa5mer2ahsbvgnnj40rgvwc.lambda-url.us-west-2.on.aws/")
-        console.error(`Error associating Elastic IP: ${error.message}`);
+        console.error(`Error retrieving public IP: ${error.message}`);
         const response = {
             statusCode: 500,
             body: JSON.stringify(error.message),
@@ -168,8 +124,8 @@ exports.handler = async (event) => {
     const response = {
         statusCode: 200,
         body: JSON.stringify({
-            instance_id: INSTANCE_ID,
-            public_ip: publicIp
+            public_ip: publicIp,
+            message: 'EC2 Instance setup complete. Minecraft container started.',
         }),
     };
     return response;
