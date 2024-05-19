@@ -70,9 +70,33 @@ async function startDockerContainer() {
 
 exports.handler = async (event) => {
     try {
+        // Check the current state of the instance
+        const describeInstancesResponse = await ec2.describeInstances({ InstanceIds: [INSTANCE_ID] }).promise();
+        const instanceState = describeInstancesResponse.Reservations[0].Instances[0].State.Name;
+
+        if (instanceState === 'running') {
+            console.log(`Instance ${INSTANCE_ID} is already running`);
+            return {
+                statusCode: 200,
+                body: JSON.stringify({ message: `Instance ${INSTANCE_ID} is already running` }),
+            };
+        }
+    } catch (error) {
+        console.error(`Error checking instance state: ${error.message}`);
+        return {
+            statusCode: 500,
+            body: JSON.stringify(error.message),
+        };
+    }
+
+    try {
         // Start the EC2 instance
         await ec2.startInstances({ InstanceIds: [INSTANCE_ID] }).promise();
         console.log(`Started instance: ${INSTANCE_ID}`);
+
+        // Wait for the instance to start
+        await ec2.waitFor('instanceRunning', { InstanceIds: [INSTANCE_ID] }).promise();
+        console.log(`Instance ${INSTANCE_ID} is running`);
     } catch (error) {
         console.error(`Error starting instance: ${error.message}`);
         const response = {
@@ -83,22 +107,10 @@ exports.handler = async (event) => {
     }
 
     try {
+        // Wait until the instance is in the "running" state
+        await ec2.waitFor('instanceStatusOk', { InstanceIds: [INSTANCE_ID] }).promise();
+        console.log(`Instance ${INSTANCE_ID} is in 'running' state`);
 
-        // Wait for the instance to start
-        await ec2.waitFor('instanceRunning', { InstanceIds: [INSTANCE_ID] }).promise();
-        console.log(`Instance ${INSTANCE_ID} is running`);
-    } catch (error) {
-        // Stop the EC2 instance
-        fetch("https://dts45otpkwa5mer2ahsbvgnnj40rgvwc.lambda-url.us-west-2.on.aws/")
-        console.error(`Error waiting for instance to start: ${error.message}`);
-        const response = {
-            statusCode: 500,
-            body: JSON.stringify(error.message),
-        };
-        return response;
-    }
-
-    try {
         // Mount the volume
         await mountVolume();
         console.log(`Mounted volume on instance ${INSTANCE_ID}`);
