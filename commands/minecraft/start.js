@@ -13,12 +13,6 @@ module.exports = {
             const response = await fetch('https://5bz6qzi222gwpvjypdhutf6j4e0yyrly.lambda-url.us-west-2.on.aws/')
                 .then(response => response.json());
             console.log(response);
-
-            // if "running" in response
-            if (response.message.includes('running')) {
-                await interaction.editReply(`Minecraft server is already running`);
-                return;
-            }
             
             // Construct the reply with the server IP address
             const reply = `The Minecraft server is up!\nYou can find it at ${response.public_ip}!`;
