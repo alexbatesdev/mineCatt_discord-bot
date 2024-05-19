@@ -6,7 +6,7 @@ module.exports = {
         .setDescription("What's updog? The server, that is!"),
     async execute(interaction) {
         // Defer the reply to allow time for server startup and IP retrieval
-        await interaction.reply('Starting the server... (This takes about 60 seconds)');
+        await interaction.deferReply('Starting the server... (This takes about 60 seconds)');
         
         try {
             // Make the API call to start the server and get the IP address
